@@ -1,22 +1,34 @@
 ###Tecnológias adotadas
+--------
+
 Usando Php Laravel (version: 5.4) + Angular.js (version: 1.6.5)
 
 ###Migrations
+--------
+
 database/migrations/2017_07_17_230958_create_marcas_table.php
 database/migrations/2017_07_17_232656_create_modelos_table.php
 
 ###Controller
+--------
+
 app\Http\Controllers\CarroController.php
 
 ###Model
+--------
+
 app\Marca.php
 app\Modelo.php
 
 ###Views
+--------
+
 resources/views/layouts
 resources/views/pages/carros
 
 ###Routes
+--------
+
 routes/web.php
 
 
