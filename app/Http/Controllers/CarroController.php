@@ -24,11 +24,11 @@ class CarroController extends Controller
     }
     public function getMarcas(){
         $marcas = Marca::all();
-        return $marcas;
+        return response()->json($marcas);
     }
     public function getCar($id){
         $car = Modelo::find($id);
-        return $car;
+        return response()->json($car);
     }
     /**
      * Show the form for creating a new resource.
@@ -52,16 +52,13 @@ class CarroController extends Controller
         $modelo->id_marca = $request->input('id_marca');
         $modelo->ano = $request->input('ano');
         $modelo->name = $request->input('name');
+
         if($modelo->save()){
-            $msg = array(
-                'success' => true
-            );
+            $msg = [ 'success' => true ];
         } else {
-            $msg = array(
-                'success' => false
-            );
+            $msg = [ 'success' => true ];
         }
-        echo json_encode($msg);
+        return response()->json($msg);
     }
 
     /**
@@ -96,22 +93,19 @@ class CarroController extends Controller
     public function update(Request $request, $id)
     {
         //
-        $msg = array();
+        $msg = [];
 
         $modelo = Modelo::find($id);
         $modelo->id_marca = $request->input('id_marca');
         $modelo->name = $request->input('name');
         $modelo->ano = $request->input('ano');
+
         if($modelo->save()){
-            $msg = array(
-                'success' => true
-            );
+            $msg = [ 'success' => true ];
         } else {
-            $msg = array(
-                'success' => false
-            );
+            $msg = [ 'success' => true ];
         }
-        echo json_encode($msg);
+        return response()->json($msg);
     }
 
     /**

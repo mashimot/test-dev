@@ -7,18 +7,16 @@
         <br/>
         <div ng-controller="CarController as vm">
             <div class="well well-sm">
-                <form ng-submit="vm.addCar()">
+                <validation-form></validation-form>
+                <form ng-submit="vm.addCar(carForm.$valid)" name="carForm">
                     <div class="form-group">
                         <label id="marca"> Marca</label>
-                        <select ng-model="vm.params.id_marca" id="marca" class="form-control" required>
-                            <option value="">Selecione uma Marca</option>
-                            <option value="@{{ marca.id }}" ng-repeat="marca in vm.marcaList"> @{{ marca.name }}</option>
-                        </select>
+                        <carro-marca ng-model="vm.params.id_marca" data="vm.marcaList"></carro-marca>
                         <label> Nome
-                            <input type="text" name="name" ng-model="vm.params.name" class="form-control" required/>
+                            <input type="text" name="name" ng-model="vm.params.name" class="form-control" ng-required="true" ng-minlength="6"/>
                         </label>
                         <label> Ano
-                            <input type="text" name="ano" ng-model="vm.params.ano" class="form-control" required/>
+                            <input type="number" name="ano" ng-model="vm.params.ano" class="form-control"  ng-required="true" ng-minlength="4" ng-maxlength="4"/>
                         </label>
                     </div>
                     <button type="submit" class="btn btn-primary">
@@ -70,18 +68,16 @@
                         </table>
                     </div>
                     <div class="panel-body" ng-if="vm.edit[i]" ng-show="vm.edit[i]">
-                        <form ng-submit="vm.editCar(list.id, i, list)">
+                        <validation-form></validation-form>
+                        <form ng-submit="vm.editCar(list.id, i, list)" name="carForm">
                             <div class="form-group">
                                 <label id="marca"> Marca</label>
-                                <select ng-model="list.id_marca" id="marca" class="form-control" required>
-                                    <option value="">Selecione uma Marca</option>
-                                    <option value="@{{ marca.id }}" ng-repeat="marca in vm.marcaList"> @{{ marca.name }}</option>
-                                </select>
+                                <carro-marca ng-model="list.id_marca" data="vm.marcaList"></carro-marca>
                                 <label> Nome
-                                    <input type="text" name="name" ng-model="list.name" class="form-control" required/>
+                                    <input type="text" name="name" ng-model="list.name" class="form-control" ng-required="true" ng-minlength="6"/>
                                 </label>
                                 <label> Ano
-                                    <input type="number" name="ano" ng-model="list.ano" class="form-control" required/>
+                                    <input type="number" name="ano" ng-model="list.ano" class="form-control"  ng-required="true" ng-minlength="4" ng-maxlength="4"/>
                                 </label>
                             </div>
                             <div class="btn-group">
@@ -100,22 +96,25 @@
 
 @section('javascript-bottom')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-messages/1.6.5/angular-messages.min.js"></script>
     <script>
 
-        angular.module("app", [])
-                .controller("CarController", ["$scope", "$http", 'CarFactory', 'MarcaFactory', function($scope, $http, CarFactory, MarcaFactory) {
+        angular.module("app", ['ngMessages'])
+                .controller("CarController", ['CarFactory', 'MarcaFactory', function(CarFactory, MarcaFactory) {
                     var vm = this;
                     vm.carList = [];
                     vm.marcaList = [];
                     vm.edit = [];
                     vm.params = {};
+                    vm.addCar = function(isFormValid){
+                        if(isFormValid){
+                            CarFactory.insert(vm.params).then(function(result){
+                                var d = result.data;
+                                if(d.success)
+                                    vm.showCars();
+                            });
+                        }
 
-                    vm.addCar = function(){
-                        CarFactory.insert(vm.params).then(function(result){
-                            var d = result.data;
-                            if(d.success)
-                                vm.showCars();
-                        });
                     };
                     vm.editCar = function(id, i, params){
                         if(vm.edit[i]){
@@ -128,7 +127,10 @@
                     };
                     vm.showCars = function(){
                         CarFactory.showAll().then(function(result){
-                            vm.carList = result.data;
+                            var d = result.data;
+                            if(d.length > 0) {
+                                vm.carList = d;
+                            }
                         });
                     };
 
@@ -141,11 +143,15 @@
                     };
                     vm.showMarcas = function(){
                         MarcaFactory.getMarcas().then(function(result){
-                            vm.marcaList =  result.data;
+                            var d = result.data;
+                            if(d.length > 0){
+                                vm.marcaList = d;
+                            }
                         });
                     };
                     vm.showCars();
                     vm.showMarcas();
+
                 }])
                 .factory('MarcaFactory', function($http){
                     var MarcaFactory = {};
@@ -164,14 +170,54 @@
                     };
                     CarFactory.insert = function(params){
                         return $http.post(url, params);
-                    }
+                    };
                     CarFactory.delete = function(id){
                         return $http.delete(url + id);
-                    }
+                    };
                     CarFactory.edit = function(id, params){
                         return $http.put(url + id, params);
-                    }
+                    };
                     return CarFactory;
+                })
+                .directive('carroMarca', function(){
+                            return {
+                                restrict: 'E',
+                                scope: {
+                                    ngModel: '=',
+                                    marcaList: '=data'
+                                },
+                                template: '<select ng-model="ngModel" class="form-control" required>'+
+                                '<option value="">Selecione uma Marca</option>'+
+                                '<option value="@{{ marca.id }}" ng-repeat="marca in marcaList"> @{{ marca.name }}</option>'+
+                                '</select>'
+                            }
+                        })
+                .directive('validationForm', function(){
+                    return {
+                        template: `
+                        <div class="errors">
+                            <div ng-messages="carForm.name.$error">
+                                <p ng-message="minlength" class="alert alert-danger">
+                                    <i class="fa fa-bell-o" aria-hidden="true"></i>
+                                    Nome deve ter no mínimo 6 caracteres.
+                                </p>
+                            </div>
+                            <div ng-messages="carForm.ano.$error">
+                                <p ng-message="number" class="alert alert-danger">
+                                    <i class="fa fa-bell-o" aria-hidden="true"></i>
+                                    Apenas números
+                                </p>
+                                <p ng-message="minlength" class="alert alert-danger">
+                                    <i class="fa fa-bell-o" aria-hidden="true"></i>
+                                    Ano deve ter no mínimo 4 caracteres.
+                                </p>
+                                <p ng-message="maxlength" class="alert alert-danger">
+                                    <i class="fa fa-bell-o" aria-hidden="true"></i>Ano deve ter no máximo 4 caracteres.
+                                </p>
+                            </div>
+                        </div>
+                        `
+                    }
                 });
     </script>
 @stop
